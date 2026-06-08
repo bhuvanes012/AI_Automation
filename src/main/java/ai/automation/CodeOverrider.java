@@ -42,8 +42,8 @@ public class CodeOverrider {
 
             JsonArray featureFile = jsonObject.get("framework").getAsJsonObject().get("components").getAsJsonObject().get("features").getAsJsonArray();
 
-            constructPomClass(pomArray, "/Users/bhuvanes/Project/Mobile-testing_May31/src/test/java/psm_PageObjects/salesforce/",true);
-            constructPomClass(stepDefinitionArray, "/Users/bhuvanes/Project/Mobile-testing_May31/src/test/java/starter/stepdefinitions/salesforceStepDefination/",false);
+            constructPomClass(pomArray, "/Users/bhuvanes/Project/Mobile-testing_May31/src/test/java/psm_PageObjects/Salesforce_HomePageObjects/",true);
+            constructPomClass(stepDefinitionArray, "/Users/bhuvanes/Project/Mobile-testing_May31/src/test/java/starter/stepdefinitions/Salesforce_StepDefinition/",false);
             constructFeatureFile(featureFile, "/Users/bhuvanes/Project/Mobile-testing_May31/src/test/resources/features/salesFre/");
 
         } catch (Exception e) {
