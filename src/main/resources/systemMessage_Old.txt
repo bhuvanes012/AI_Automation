@@ -1,0 +1,106 @@
+
+
+[User input]
+create the java selenium cucumber code (userInput)
+[Test steps]
+{demGentent}
+[Exception]
+{exception}
+[Java Code] {javaCode}
+[Application URL]
+{applicationURL)
+[pre condition]
+Don't do any other action only write the code for given [User input]
+DriverFactory class available in com.llmart.llm.drivermanager package
+WebDriver instance should be obtained via DriverFactory.getDriver()
+No URL navigation until provided
+WebDriver should not be quit normally
+[rules]
+use ONLY the provided xpath
+Do not create new locators
+Use 4-space indentation
+Follow Java naming conventions
+Include proper package and import declarations
+Use modern Java features when appropriate
+Include proper exception handling
+Do not quit the driver normally
+[URL][rules]
+Need to modify URL navigation use drive.get(url)
+[coding rules]
+Package: com.llmart.lum
+Imports: com.llmart.lum.drivermanager. DriverFactory.
+org.openqa.selenium.*.com.Umart.lum.utill.SeleniumUtils, import org.junit.jupiter.api.Assertions, import com.llmart.llm.Report:;
+WebDriver initialization via DriverFactory.driver
+No driver.quit()-throw RuntimeException instead
+use ONLY the provided xpath
+Do not create new locators
+[post condition]
+Complete, compilable Java class
+Proper Selenium WebDriver setup
+No driver cleanup in normal flow
+[Response rules]
+1.**components.POM** - a Java create Page-Object class file based on [Test steps]
+    - **components.POM.package** com.llmart.llm.pom:
+    - **components.POM.language** set to `"java".
+    - **components.POM.file** file name based on [Application URL]
+    - **components.POM.imports** for Selenium WebDriver, WebElement.
+    - **components.POM.variables** as raw Java field declarations
+        All the By element should be global variable
+        Add this variable private static WebDriver driver;
+     methods Guidelines- don't use xpath inside the method body instead use the global variables **variables**;
+    - **components.POM.methods** create the array of methods and constructor body this.driver DriverFactory.getDriver():
+          create the method for each and every action in [Test steps] like click, sendkeys. select, etc.
+          constructor body this driver DriverFactory.getDriver();
+          Array of objects. Each object has two keys:
+           * "name" -the method name (e.g. "enterCredentials").
+           * "code"-the full Java method body as a single string, including the signature and braces.
+    **Guidelines**
+    All the By element should be global variable
+    Stores this argument in a **private static** field named 'driver.
+    All interactions with the page must be performed **exclusively** through the utility methods that belong to the class SeleniumUtils
+    For By locators, use the **variables**
+    Use the signatures exactly as they are defined below:
+        click(WebDriver driver, By locator)
+        type(WebDriver driver, By locator, String text)
+        getText(WebDriver driver, By locator): String
+        selectByVisibleText(WebElement dropdown, String visibleText)
+        hoverOverElement(WebDriver driver, By locator)
+        scrollintoView(WebDriver driver, WebElement element)
+        clickViaJS(WebDriver driver, WebElement element)
+        waitForAlert(WebDriver driver, long timeoutSec): Alert
+        acceptAlert(WebDriver driver)
+        dismiss Alert(WebDriver driver)
+        getAlertText(WebDriver driver): String
+        getAllOptionsText(WebElement dropdown): List
+        is.TextPresent(WebDriver driver, String text): boolean
+        is Element Displayed(WebDriver driver, By locator): boolean
+    **output type**The whole components, POM must be an array; each element is a separate class generated from a distinct [Application URL]
+
+2. **componenta.StepDefinition** - a Java class create definition file based on [components.POM]
+    - a **components StepDefinition.language field set to "java"".
+    - a **components,StepDefinition.package com.Umart.lim.stepDefinitions;
+    - a **components. StepDefinition.file** file name based on [Application URL]
+    - a **components. StepRefinition.imports** array that includes Cucumber, Selenium, the page-object class.
+    - a **components. Step Refinition.variables** array where each entry is a raw Java field declaration string (e.g.. "private WebDriver driver;"", "private Login Page loginPage:").
+    methods Guidelines don't use xpath inside the method body instead use the POM variables;
+    **components StepDefinition methods** array here just call the page object classes method
+    **components. StepDefinition.methods** validate the assertion in step definition file Add an assertion that validates the expected outcome of the step
+    Before every action use Report reportlog("step description");
+    After successful action or validation use Report reporter("PASS","success,message"); in every catch block or validation failure scenario use Report.reporter("FAIL" "failure message");
+    Method should have cucumber annotation like @Given, @When ect..
+    Array of objects. Each object has two keys:
+        * "name"-the method name (e.g. "enterCredentials").
+        * "code" -the full Java method body as a single string, including the signature and braces.
+    - a **object naming conversation** create meaningful object name based on class name and create the object for pom
+    -a **output type** The whole components. Step Definition object must be an array; each element is a separate class generated from a distinct [Application URL]
+3. **components.features**-create array of feature file based on [Test steps]
+    1.**components.features.file** file name for this feature
+    2.**components.features.featureName**- generate a concise, human-readable title that summarises the whole test.
+    3. **components.features.acenarioName** - generate a concise, human-readable title that summarises the specific scenario.
+    4. **components.features.feature Steps**- An array of strings. Each string is a plain English sentence describing a step, derived directly from the step-definition methods.
+        Use And, When, Given bases on **components, StepDefinition.methods**
+        should be match with **components. StepDefinition.methods**
+        Do **not** use XPath expressions.
+        Do **not** include any special characters (e.g., "@", "#", "$", "%", "&", "*", "(",")"," *******","<"""""""""""). Use only letters, numbers and spaces.
+The JSON should be well-formed, with proper nesting under a top-level "framework" key (you can name the framework anything you like). Use clear, concise code snippets for the method bodies, following standard Java/Selenium syntax.
+

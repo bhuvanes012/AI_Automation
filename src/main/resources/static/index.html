@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Power Automation Integration</title>
+
+    <style>
+        :root{
+            --primary:#4CAF50;
+            --primary-dark:#3d8b40;
+            --border:#ddd;
+        }
+
+        *{
+            box-sizing:border-box;
+        }
+
+        body{
+            margin:20px;
+            font-family:Arial,sans-serif;
+            background:#f8f9fa;
+        }
+
+        h1{
+            text-align:center;
+            color:#333;
+        }
+
+        .controls{
+            display:flex;
+            flex-wrap:wrap;
+            gap:10px;
+            margin-bottom:15px;
+        }
+
+        button{
+            background:var(--primary);
+            color:#fff;
+            border:none;
+            padding:10px 15px;
+            border-radius:6px;
+            cursor:pointer;
+            font-size:14px;
+        }
+
+        button:hover{
+            background:var(--primary-dark);
+        }
+
+        .table-container{
+            max-height:600px;
+            overflow:auto;
+            border:1px solid #ccc;
+            background:#fff;
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+        }
+
+        thead th{
+            position:sticky;
+            top:0;
+            background:var(--primary);
+            color:white;
+            z-index:10;
+        }
+
+        th,td{
+            border:1px solid var(--border);
+            padding:8px;
+            vertical-align:top;
+        }
+
+        .selected-row{
+            background:#e6f7ff;
+        }
+
+        .element-ui{
+            border:1px solid #ccc;
+            background:#fafafa;
+            padding:10px;
+            text-align:center;
+            min-width:200px;
+        }
+
+        .custom-prompt{
+            width:100%;
+            min-height:70px;
+        }
+
+        .hidden{
+            display:none;
+        }
+
+        .xpath-dropdown{
+            width:100%;
+            padding:6px;
+        }
+
+        .empty{
+            border:2px solid red !important;
+        }
+
+        .json-panel,
+        .response-panel{
+            margin-top:20px;
+            padding:15px;
+            background:white;
+            border:1px solid #ccc;
+        }
+
+        pre{
+            white-space:pre-wrap;
+            word-wrap:break-word;
+            background:#f5f5f5;
+            padding:10px;
+            max-height:400px;
+            overflow:auto;
+        }
+
+        #editableJson{
+            min-height:300px;
+            border:1px solid #ccc;
+            padding:10px;
+            background:#fafafa;
+            white-space:pre-wrap;
+            overflow:auto;
+        }
+
+        .loading-overlay{
+            display:none;
+            position:fixed;
+            inset:0;
+            background:rgba(0,0,0,0.5);
+            z-index:9999;
+            justify-content:center;
+            align-items:center;
+            flex-direction:column;
+            color:white;
+            font-size:20px;
+        }
+
+        .spinner{
+            width:60px;
+            height:60px;
+            border:6px solid #eee;
+            border-top:6px solid var(--primary);
+            border-radius:50%;
+            animation:spin 1s linear infinite;
+            margin-bottom:15px;
+        }
+
+        @keyframes spin{
+            from{transform:rotate(0deg);}
+            to{transform:rotate(360deg);}
+        }
+
+        .flash{
+            border-left:5px solid var(--primary);
+        }
+
+        @media(max-width:900px){
+            table{
+                font-size:12px;
+            }
+
+            .element-ui{
+                min-width:150px;
+            }
+
+            button{
+                flex:1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>AI Power Automation Integration</h1>
+
+<div class="controls">
+
+    <button id="selectAllBtn">Select All</button>
+    <button id="deselectAllBtn">Deselect All</button>
+    <button id="viewJsonBtn">View Selected as JSON</button>
+    <button id="clearSelectionBtn">Clear Selection</button>
+    <button id="refreshBtn">Refresh Page</button>
+
+</div>
+
+<div class="table-container">
+
+    <table id="elementTable">
+
+        <thead>
+        <tr>
+            <th>Select</th>
+            <th>Action</th>
+            <th>Custom Prompt</th>
+            <th>Label</th>
+            <th>Element UI</th>
+            <th>XPath</th>
+        </tr>
+        </thead>
+
+        <tbody></tbody>
+
+    </table>
+
+</div>
+
+<div id="jsonView" class="json-panel hidden">
+
+    <h3>Generated JSON</h3>
+
+    <pre id="jsonOutput"></pre>
+
+    <button id="copyJsonBtn">Copy JSON</button>
+    <button id="formatJsonBtn">Format JSON</button>
+    <button id="sendLLMBtn">Send To LLM</button>
+
+</div>
+
+<div id="apiResponse" class="response-panel hidden">
+
+    <h3>API Response</h3>
+
+    <div id="editableJson" contenteditable="true"></div>
+
+    <br>
+
+    <button id="applyBtn">Apply To Code</button>
+    <button id="cancelBtn">Cancel</button>
+
+</div>
+
+<div id="loadingOverlay" class="loading-overlay">
+
+    <div class="spinner"></div>
+
+    <div>Sending to API...</div>
+
+</div>
+
+<script>
+
+    let jsonData = [];
+    let originalResponse = "";
+
+    const actions = [
+        "click",
+        "Send keys",
+        "Get value attribute",
+        "validate label",
+        "select dropdown",
+        "scroll until element view",
+        "validate element is displayed",
+        "validate element is selected",
+        "validate element is enabled",
+        "rightclick",
+        "Double-click"
+    ];
+
+    document.addEventListener("DOMContentLoaded", async () => {
+
+        await loadData();
+
+        document.getElementById("selectAllBtn")
+            .addEventListener("click", selectAllRows);
+
+        document.getElementById("deselectAllBtn")
+            .addEventListener("click", deselectAllRows);
+
+        document.getElementById("viewJsonBtn")
+            .addEventListener("click", viewSelectedAsJson);
+
+        document.getElementById("copyJsonBtn")
+            .addEventListener("click", copyJson);
+
+        document.getElementById("formatJsonBtn")
+            .addEventListener("click", formatJson);
+
+        document.getElementById("sendLLMBtn")
+            .addEventListener("click", sendToLLM);
+
+        document.getElementById("clearSelectionBtn")
+            .addEventListener("click", sendToClearData);
+
+        document.getElementById("refreshBtn")
+            .addEventListener("click", refreshPage);
+
+        document.getElementById("applyBtn")
+            .addEventListener("click", saveJson);
+
+        document.getElementById("cancelBtn")
+            .addEventListener("click", cancelJson);
+
+    });
+
+    function showLoading(){
+        document.getElementById("loadingOverlay").style.display="flex";
+    }
+
+    function hideLoading(){
+        document.getElementById("loadingOverlay").style.display="none";
+    }
+
+    async function loadData(){
+
+        try{
+
+            showLoading();
+
+            const response =
+                await fetch("http://localhost:8090/api/locators");
+
+            if(!response.ok){
+                throw new Error("Failed to load data");
+            }
+
+            jsonData = await response.json();
+
+            generateTableRows();
+
+        }catch(error){
+
+            console.error(error);
+            alert(error.message);
+
+        }finally{
+            hideLoading();
+        }
+    }
+
+    function generateTableRows(){
+
+        const tbody =
+            document.querySelector("#elementTable tbody");
+
+        tbody.innerHTML="";
+
+        jsonData.forEach((item,index)=>{
+
+            const tr = document.createElement("tr");
+
+            tr.dataset.appUrl =
+                item.applicationURL || "";
+
+            tr.dataset.inputValue =
+                item.elementInputValue ||
+                item.elementiorutValue ||
+                item.glementiorutValue ||
+                "";
+
+            const xpathList =
+                item.listOfXpath ||
+                item.lisOfXpath ||
+                [item.elementXpath];
+
+            tr.innerHTML = `
+            <td>
+                <input type="checkbox" class="row-check">
+            </td>
+
+            <td>
+                <select class="action-dropdown" aria-label="Action">
+                    ${actions.map(a =>
+                        `<option>${a}</option>`).join("")}
+                </select>
+            </td>
+
+            <td>
+                <textarea class="custom-prompt hidden"></textarea>
+            </td>
+
+            <td>${item.elementLabel || ""}</td>
+
+            <td>
+                <div class="element-ui">
+                    ${item.elementUI || ""}
+                </div>
+            </td>
+
+            <td>
+                <select class="xpath-dropdown"
+                    aria-label="XPath Selection">
+
+                    <option value="">
+                        Select XPath...
+                    </option>
+
+                    ${xpathList.map(x =>
+                    `<option value="${escapeHtml(x)}">
+                        ${escapeHtml(x)}
+                    </option>`).join("")}
+                </select>
+            </td>
+            `;
+
+            tbody.appendChild(tr);
+
+            const checkbox =
+                tr.querySelector(".row-check");
+
+            const textarea =
+                tr.querySelector(".custom-prompt");
+
+            checkbox.addEventListener("change",()=>{
+
+                tr.classList.toggle(
+                    "selected-row",
+                    checkbox.checked
+                );
+
+                textarea.classList.toggle(
+                    "hidden",
+                    !checkbox.checked
+                );
+
+            });
+
+            const actionDropdown =
+                tr.querySelector(".action-dropdown");
+
+            actionDropdown.addEventListener("change",()=>{
+
+                tr.classList.add("flash");
+
+                setTimeout(()=>{
+                    tr.classList.remove("flash");
+                },1000);
+
+            });
+
+        });
+
+    }
+
+    function selectAllRows(){
+
+        document
+            .querySelectorAll(".row-check")
+            .forEach(cb=>{
+
+                cb.checked=true;
+
+                cb.dispatchEvent(
+                    new Event("change")
+                );
+            });
+    }
+
+    function deselectAllRows(){
+
+        document
+            .querySelectorAll(".row-check")
+            .forEach(cb=>{
+
+                cb.checked=false;
+
+                cb.dispatchEvent(
+                    new Event("change")
+                );
+            });
+    }
+
+    function viewSelectedAsJson(){
+
+        const rows =
+            document.querySelectorAll(
+                "#elementTable tbody tr"
+            );
+
+        const result=[];
+
+        let invalid=false;
+
+        rows.forEach(row=>{
+
+            const checked =
+                row.querySelector(".row-check").checked;
+
+            if(!checked){
+                return;
+            }
+
+            const xpathDropdown =
+                row.querySelector(".xpath-dropdown");
+
+            xpathDropdown.classList.remove("empty");
+
+            if(!xpathDropdown.value){
+
+                xpathDropdown.classList.add("empty");
+                invalid=true;
+                return;
+            }
+
+            result.push({
+
+                elementLabel:
+                    row.cells[3].innerText,
+
+                elementXpath:
+                    row.cells[5].querySelector('select').value,
+
+                action:
+                    row.querySelector(
+                        ".action-dropdown"
+                    ).value,
+
+                customPrompt:
+                    row.querySelector(
+                        ".custom-prompt"
+                    ).value || null,
+
+                applicationURL:
+                    row.dataset.appUrl,
+
+                elementInputValue:
+                    row.dataset.inputValue
+
+            });
+
+        });
+
+        if(invalid){
+
+            alert(
+                "Please select XPath for all selected rows."
+            );
+
+            return;
+        }
+
+        document
+            .getElementById("jsonView")
+            .classList.remove("hidden");
+
+        document
+            .getElementById("jsonOutput")
+            .textContent =
+                JSON.stringify(result,null,4);
+    }
+
+    function formatJson(){
+
+        try{
+
+            const pre =
+                document.getElementById("jsonOutput");
+
+            pre.textContent =
+                JSON.stringify(
+                    JSON.parse(pre.textContent),
+                    null,
+                    4
+                );
+
+        }catch(e){
+
+            alert("Invalid JSON");
+
+        }
+    }
+
+    async function copyJson(){
+
+        try{
+
+            await navigator.clipboard.writeText(
+                document.getElementById(
+                    "jsonOutput"
+                ).textContent
+            );
+
+            alert("Copied");
+
+        }catch(e){
+
+            alert("Copy failed");
+
+        }
+    }
+
+    async function sendToLLM(){
+
+        try{
+
+            showLoading();
+
+            const json =
+                document.getElementById(
+                    "jsonOutput"
+                ).textContent;
+
+            const response =
+                await fetch(
+                    "http://localhost:8090/api/generateLLMCode",
+                    {
+                        method:"POST",
+                        headers:{
+                            "Content-Type":
+                            "application/json"
+                        },
+                        body:json
+                    }
+                );
+
+            if(!response.ok){
+                throw new Error(
+                    "LLM API failed"
+                );
+            }
+
+            const data =
+                await response.json();
+
+            showApiResponse(data);
+
+        }catch(error){
+
+            alert(error.message);
+
+        }finally{
+
+            hideLoading();
+        }
+    }
+
+    function showApiResponse(data){
+
+        originalResponse =
+            JSON.stringify(data,null,4);
+
+        document
+            .getElementById("apiResponse")
+            .classList.remove("hidden");
+
+        document
+            .getElementById("editableJson")
+            .textContent =
+                originalResponse;
+    }
+
+    async function saveJson(){
+
+        try{
+
+            showLoading();
+
+            const edited =
+                document.getElementById(
+                    "editableJson"
+                ).textContent;
+
+            JSON.parse(edited);
+
+            const response =
+                await fetch(
+                    "http://localhost:8090/api/applyCode",
+                    {
+                        method:"POST",
+                        headers:{
+                            "Content-Type":
+                            "application/json"
+                        },
+                        body:edited
+                    }
+                );
+
+            if(!response.ok){
+                throw new Error(
+                    "Apply code failed"
+                );
+            }
+
+            const data =
+                await response.json();
+
+            document
+                .getElementById("editableJson")
+                .textContent =
+                    JSON.stringify(
+                        data,
+                        null,
+                        4
+                    );
+
+        }catch(error){
+
+            alert(error.message);
+
+        }finally{
+
+            hideLoading();
+        }
+    }
+
+    function cancelJson(){
+
+        document
+            .getElementById("editableJson")
+            .textContent =
+                originalResponse;
+    }
+
+    async function sendToClearData(){
+
+        try{
+
+            showLoading();
+
+            const response =
+                await fetch(
+                    "http://localhost:8090/api/locators/clear"
+                );
+
+            if(!response.ok){
+                throw new Error(
+                    "Clear failed"
+                );
+            }
+
+            location.reload();
+
+        }catch(error){
+
+            alert(error.message);
+
+        }finally{
+
+            hideLoading();
+        }
+    }
+
+    function refreshPage(){
+        location.reload();
+    }
+
+    function escapeHtml(str){
+
+       return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+</script>
+
+</body>
+</html>

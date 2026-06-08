@@ -1,0 +1,205 @@
+Generate Java Selenium Cucumber framework code based on the following input.
+
+[Test Steps]
+{testSteps}
+
+RULES
+- Generate code only for the provided Test Steps.
+- Use Java with 4-space indentation.
+- Generate complete compilable code.
+- Follow Java naming conventions.
+- Include package and required imports for each class.
+- Do not generate explanations.
+- Return ONLY valid JSON.
+
+DRIVER RULES
+- Use DriverFactory from:
+- Get driver only using:
+  getDriver()
+- Never create a new WebDriver instance.
+- Never use driver.quit() or driver.close().
+- If cleanup logic is required:
+  throw new RuntimeException("Driver cleanup is not allowed");
+- Navigate only if explicitly mentioned in Test Steps.
+- Use:
+  driver.get(url);
+
+LOCATOR RULES
+- Use ONLY the provided XPath locators.
+- Never create new locators.
+- Never generate dynamic locators.
+- Declare all locators as global By variables.
+- Never use XPath directly inside methods.
+
+OUTPUT FORMAT
+{
+  "framework": {
+    "components": {
+      "POM": [],
+      "StepDefinition": [],
+      "features": []
+    }
+  }
+}
+
+POM REQUIREMENTS
+
+- Package:
+  psm_PageObjects.salesforce;
+- Class name:
+  POM class name MUST be derived from:
+  Application URL page name
+  Current Test Step Label
+  Example:
+  URL: https://demo.automationtesting.in/Register.html
+  Label: Languages
+
+  Class Name: RegisterPage
+  File Name: RegisterPage.java
+
+- Class declaration:
+- Imports:
+  Include only required imports.
+  Always include:
+  import Utility.SeleniumUtils;
+  import net.serenitybdd.core.*;
+  import net.serenitybdd.core.pages.PageObject;
+- Driver declaration:
+  private WebDriver driver;
+
+  Replace ClassName with the actual generated class name.
+- Locators:
+  Create all locators as global class-level variables.
+  Do not create locators inside methods.
+- Methods:
+  Create one method for each action described in the Test Steps.
+  Method names should be meaningful and business-readable.
+  MANDATORY CONSTRUCTOR (DO NOT SKIP):
+  Every generated POM class MUST contain a constructor.
+  Constructor format:
+    public ClassName() {
+        this.driver = getDriver();
+    }
+- Selenium interactions:
+  Use SeleniumUtils methods only for all page interactions.
+  Do not use driver.findElement(), click(), sendKeys(), getText(), Select, Actions, JavaScriptExecutor, or explicit Selenium actions directly.
+
+- Design rules:
+  - Follow Page Object Model design.
+  - Keep methods reusable.
+  - Use descriptive locator names.
+  - Avoid duplicate methods.
+  - Generate only page-specific methods.
+  - Do not include test logic, assertions, or validations in POM classes.
+- Allowed SeleniumUtils methods:
+    click(WebDriver driver, By locator)
+    type(WebDriver driver, By locator, String text)
+    getText(WebDriver driver, By locator)
+    selectByVisibleText(WebElement dropdown, String visibleText)
+    hoverOverElement(WebDriver driver, By locator)
+    scrollintoView(WebDriver driver, WebElement element)
+    clickViaJS(WebDriver driver, WebElement element)
+    waitForAlert(WebDriver driver, long timeoutSec)
+    acceptAlert(WebDriver driver)
+    dismissAlert(WebDriver driver)
+    getAlertText(WebDriver driver)
+    getAllOptionsText(WebElement dropdown)
+    isTextPresent(WebDriver driver, String text)
+    isElementDisplayed(WebDriver driver, By locator)
+
+POM JSON FORMAT
+
+{
+  "package": "",
+  "language": "java",
+  "file": "",
+  "imports": [],
+  "variables": [],
+  "methods": [
+    {
+      "name": "",
+      "code": ""
+    }
+  ]
+}
+JSON RULES
+
+- Constructor MUST be included in the methods array.
+- Constructor MUST be the first item in the methods array.
+- Constructor name MUST match the generated class name.
+- Constructor code MUST initialize the driver using getDriver().
+
+Example:
+
+{
+  "name": "LoginPage",
+  "code": "public LoginPage() {\n    this.driver = getDriver();\n}"
+}
+
+VALIDATION RULES
+
+- Every generated POM must contain exactly one constructor.
+- Constructor must be present even if no page methods exist.
+- Constructor must be the first entry in methods.
+- A POM JSON is INVALID if the constructor is missing.
+
+STEP DEFINITION REQUIREMENTS
+
+- Package:
+  starter.stepdefinitions.salesforceStepDefination
+- Include only required imports.
+- Add:  import psm_PageObjects.*; import Utility.Reporter;
+- Create page object instances with meaningful names.
+- Use Cucumber annotations.
+- Call only POM methods.
+- Never use XPath in Step Definitions.
+- Perform all assertions in Step Definitions.
+
+Reporting:
+Before every action:
+Reporter.reportLog("title","step description");
+After success:
+Reporter.reportLog("PASS","success message");
+On failure:
+Reporter.reportLog("FAIL","failure message");
+
+STEP DEFINITION JSON FORMAT
+
+{
+  "package": "",
+  "language": "java",
+  "file": "",
+  "imports": [],
+  "variables": [],
+  "methods": [
+    {
+      "name": "",
+      "code": ""
+    }
+  ]
+}
+
+FEATURE REQUIREMENTS
+- Generate feature files from Step Definitions.
+- File name based on scenario purpose.
+- Generate Feature Name.
+- Generate Scenario Name.
+- Steps must match Step Definition methods.
+- Do not include XPath.
+- Use only Given, When, Then, And.
+
+FEATURE JSON FORMAT
+{
+  "file": "",
+  "featureName": "",
+  "scenarioName": "",
+  "featureSteps": []
+}
+FINAL RULE
+Return ONLY valid JSON with:
+- POM array
+- StepDefinition array
+- Features array
+No explanations.
+No markdown.
+No extra text.
